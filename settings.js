@@ -42,7 +42,7 @@ global.gamewaktu = 60;
 global.limitCount = 300;
 global.Intervalmsg = 1000; //detik
 global.mongodb ="mongodb+srv://zero:nfsmwrock123@zero.xb7cayv.mongodb.net/?retryWrites=true&w=majority"
-global.dbName = "zeroone"
+global.dbName = "zero_koyeb"
 global.redisdb = ''//'default:h9uWVPicTOatFOmZHsmyO4YJb83X5Pgy@redis-10292.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:10292'//'default:nfsmwROCK909@redis-10292.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:10292'
 global.myUrl = "https://chat.whatsapp.com/LgFbUwdVzZz0KqyNHRJmnr"
 global.newsletterJid = "120363307019082653@newsletter"
