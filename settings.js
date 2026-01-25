@@ -21,7 +21,7 @@ global.waifu = ''
 
 //======= BOT SETTINGS ======\\
 global.pairingCode = true // true / false
-global.nomerBot = "6283879106234"
+global.nomerBot = "6282327881953"
 global.botName = "ᴢᴇʀᴏ ʙᴏᴛ ᴀɪ"
 global.session = "session" 
 global.runWith = "google"
