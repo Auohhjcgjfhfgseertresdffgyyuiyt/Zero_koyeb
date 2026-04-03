@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codeverse | Scraper List</title>
+    <title>Codeverse | My Scrapers</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -17,8 +17,9 @@
         }
         .search:focus { border-color: #22c55e; }
 
+        #list { display: flex; flex-direction: column; gap: 10px; }
         .card { 
-            background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; 
+            background: #18181f; padding: 18px; border-radius: 15px; 
             cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;
             border: 1px solid transparent;
         }
@@ -26,24 +27,23 @@
 
         .badge { font-size: 11px; background: #0f172a; padding: 4px 10px; border-radius: 8px; margin-left: 5px; color: #22c55e; text-transform: uppercase; border: 1px solid #22c55e44; }
 
-        /* Viewer Overlay */
+        /* Viewer Modal */
         .codeViewer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100;
+            background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 100;
         }
         .codeBox { 
-            background: #111; width: 90%; max-width: 950px; height: 85%; 
-            border-radius: 15px; padding: 25px; overflow: hidden; position: relative;
-            border: 1px solid #333;
+            background: #0a0a0a; width: 95%; max-width: 1000px; height: 90%; 
+            border-radius: 15px; padding: 25px; position: relative; border: 1px solid #22c55e33;
         }
         .controls { position: absolute; top: 15px; right: 20px; display: flex; gap: 15px; align-items: center; }
-        .btn-copy { background: #22c55e; color: #000; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .btn-copy { background: #22c55e; color: #000; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .close { cursor: pointer; font-size: 24px; color: #ff5f56; }
 
         pre { 
-            color: #a7ffeb; white-space: pre-wrap; word-wrap: break-word; 
-            overflow-y: auto; height: 90%; margin-top: 20px; font-family: 'Courier New', monospace;
-            font-size: 14px; line-height: 1.6; padding: 10px;
+            color: #22c55e; white-space: pre-wrap; word-wrap: break-word; 
+            overflow-y: auto; height: 90%; margin-top: 30px; font-family: 'Consolas', monospace;
+            font-size: 14px; line-height: 1.6; padding: 15px; background: #000; border-radius: 10px;
         }
     </style>
 </head>
@@ -51,72 +51,72 @@
 
 <div class="container">
     <div class="header">📦 My Scrape Code</div>
-    <input type="text" class="search" placeholder="Cari nama plugin..." onkeyup="searchCode(this.value)">
-    <div id="list">Memuat data...</div>
+    <input type="text" class="search" id="searchInput" placeholder="Cari plugin (misal: aapldown)..." onkeyup="searchCode()">
+    
+    <div id="list">
+        <!-- List akan muncul otomatis dari script -->
+    </div>
 </div>
 
-<!-- Code Viewer Modal -->
 <div class="codeViewer" id="viewer">
     <div class="codeBox">
         <div class="controls">
             <button class="btn-copy" onclick="copyCode()">Copy Code</button>
             <div class="close" onclick="closeCode()">✖</div>
         </div>
-        <pre id="code"></pre>
+        <pre id="codeDisplay"></pre>
     </div>
 </div>
 
 <script>
-    const listElement = document.getElementById("list");
+    // --- KONFIGURASI NAMA FILE ---
+    // Tambahkan nama file .js Anda di sini setiap kali ada plugin baru
+    const myPlugins = [
+        "nanobanana.js",
+        "tiktok.js",
+        "youtube_dl.js",
+        "ig_save.js"
+    ];
 
-    // 1. Ambil daftar file dari API Backend
-    async function loadFiles() {
-        try {
-            const res = await fetch('/api/files');
-            const files = await res.json();
-            render(files);
-        } catch (err) {
-            listElement.innerHTML = "<p style='color:red'>Gagal terhubung ke server.</p>";
-        }
-    }
+    const folderPath = "scrape/"; // Pastikan folder ini ada di sebelah file HTML ini
 
-    // 2. Tampilkan daftar file ke web
-    function render(files) {
-        if(files.length === 0) {
-            listElement.innerHTML = "Tidak ada file .js di folder 'scrape'.";
-            return;
-        }
-        listElement.innerHTML = "";
-        files.forEach(file => {
-            const div = document.createElement("div");
-            div.className = "card";
-            div.innerHTML = `
+    // Fungsi menampilkan list
+    function renderList() {
+        const listDiv = document.getElementById("list");
+        listDiv.innerHTML = "";
+
+        myPlugins.forEach(file => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
                 <div>
                     <span style="font-size:18px">📄</span> <b>${file}</b>
-                    <span class="badge">Javascript</span>
-                    <span class="badge">Plugin</span>
+                    <span class="badge">JS</span>
+                    <span class="badge">Scraper</span>
                 </div>
                 <span style="color:#22c55e">➜</span>
             `;
-            div.onclick = () => openCode(file);
-            listElement.appendChild(div);
+            card.onclick = () => openCode(file);
+            listDiv.appendChild(card);
         });
     }
 
-    // 3. Baca isi file dan tampilkan di Viewer
-    async function openCode(file) {
+    // Fungsi membuka file
+    async function openCode(fileName) {
         const viewer = document.getElementById("viewer");
-        const codeDisplay = document.getElementById("code");
+        const display = document.getElementById("codeDisplay");
         
         viewer.style.display = "flex";
-        codeDisplay.textContent = "// Membaca kode...";
+        display.textContent = "// Sedang memuat kode...";
 
         try {
-            const res = await fetch(`/scrape/${file}`);
-            const text = await res.text();
-            codeDisplay.textContent = text;
+            // Mengambil isi file .js dari folder scrape/
+            const response = await fetch(folderPath + fileName);
+            if (!response.ok) throw new Error();
+            const content = await response.text();
+            display.textContent = content;
         } catch (err) {
-            codeDisplay.textContent = "// Error: Gagal memuat isi file.";
+            display.textContent = "// Error: File tidak ditemukan di folder 'scrape/'.\n// Pastikan nama file di daftar 'myPlugins' sudah benar.";
         }
     }
 
@@ -125,21 +125,22 @@
     }
 
     function copyCode() {
-        const codeText = document.getElementById("code").textContent;
-        navigator.clipboard.writeText(codeText);
-        alert("Kode berhasil disalin!");
+        const text = document.getElementById("codeDisplay").textContent;
+        navigator.clipboard.writeText(text);
+        alert("Kode disalin ke clipboard!");
     }
 
-    function searchCode(keyword) {
+    function searchCode() {
+        const input = document.getElementById("searchInput").value.toLowerCase();
         const cards = document.querySelectorAll(".card");
         cards.forEach(card => {
             const name = card.innerText.toLowerCase();
-            card.style.display = name.includes(keyword.toLowerCase()) ? "flex" : "none";
+            card.style.display = name.includes(input) ? "flex" : "none";
         });
     }
 
-    // Jalankan saat halaman dibuka
-    loadFiles();
+    // Jalankan pertama kali
+    renderList();
 </script>
 
 </body>
