@@ -1,195 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Codeverse</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codeverse | Scraper List</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f0f14; color: #fff; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .header { font-size: 28px; font-weight: 600; margin-bottom: 20px; color: #22c55e; }
+        
+        .search { 
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
+            background: #1b1b22; color: #fff; margin-bottom: 25px; outline: none;
+        }
+        .search:focus { border-color: #22c55e; }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+        .card { 
+            background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; 
+            cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid transparent;
+        }
+        .card:hover { background: #20202a; transform: translateY(-3px); border-color: #22c55e44; }
 
-<style>
+        .badge { font-size: 11px; background: #0f172a; padding: 4px 10px; border-radius: 8px; margin-left: 5px; color: #22c55e; text-transform: uppercase; border: 1px solid #22c55e44; }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
+        /* Viewer Overlay */
+        .codeViewer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .codeBox { 
+            background: #111; width: 90%; max-width: 950px; height: 85%; 
+            border-radius: 15px; padding: 25px; overflow: hidden; position: relative;
+            border: 1px solid #333;
+        }
+        .controls { position: absolute; top: 15px; right: 20px; display: flex; gap: 15px; align-items: center; }
+        .btn-copy { background: #22c55e; color: #000; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .close { cursor: pointer; font-size: 24px; color: #ff5f56; }
 
-body{
-background:#0f0f14;
-color:#fff;
-padding:20px;
-}
-
-.container{
-max-width:900px;
-margin:auto;
-}
-
-.header{
-font-size:28px;
-font-weight:600;
-margin-bottom:20px;
-}
-
-.search{
-width:100%;
-padding:12px;
-border-radius:12px;
-border:none;
-background:#1b1b22;
-color:#fff;
-margin-bottom:20px;
-}
-
-.card{
-background:#18181f;
-padding:15px;
-border-radius:15px;
-margin-bottom:12px;
-cursor:pointer;
-transition:0.2s;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.card:hover{
-background:#20202a;
-transform:translateY(-2px);
-}
-
-.badge{
-font-size:12px;
-background:#0f172a;
-padding:3px 8px;
-border-radius:8px;
-margin-left:5px;
-color:#22c55e;
-}
-
-.codeViewer{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000000dd;
-display:none;
-justify-content:center;
-align-items:center;
-}
-
-.codeBox{
-background:#111;
-width:90%;
-max-width:900px;
-height:80%;
-border-radius:12px;
-padding:15px;
-overflow:auto;
-}
-
-.close{
-float:right;
-cursor:pointer;
-font-size:20px;
-}
-
-pre{
-color:#00ffae;
-white-space:pre-wrap;
-}
-
-</style>
+        pre { 
+            color: #a7ffeb; white-space: pre-wrap; word-wrap: break-word; 
+            overflow-y: auto; height: 90%; margin-top: 20px; font-family: 'Courier New', monospace;
+            font-size: 14px; line-height: 1.6; padding: 10px;
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-
-<div class="header">📦 My Scrape Code</div>
-
-<input type="text" class="search" placeholder="Search code..." onkeyup="searchCode(this.value)">
-
-<div id="list"></div>
-
+    <div class="header">📦 My Scrape Code</div>
+    <input type="text" class="search" placeholder="Cari nama plugin..." onkeyup="searchCode(this.value)">
+    <div id="list">Memuat data...</div>
 </div>
 
+<!-- Code Viewer Modal -->
 <div class="codeViewer" id="viewer">
-<div class="codeBox">
-<div class="close" onclick="closeCode()">✖</div>
-<pre id="code"></pre>
-</div>
+    <div class="codeBox">
+        <div class="controls">
+            <button class="btn-copy" onclick="copyCode()">Copy Code</button>
+            <div class="close" onclick="closeCode()">✖</div>
+        </div>
+        <pre id="code"></pre>
+    </div>
 </div>
 
 <script>
+    const listElement = document.getElementById("list");
 
-const owner = "Auohhjcgjfhfgseer"
-const repo = "Zero_koyeb"
-const folder = "scrape"
+    // 1. Ambil daftar file dari API Backend
+    async function loadFiles() {
+        try {
+            const res = await fetch('/api/files');
+            const files = await res.json();
+            render(files);
+        } catch (err) {
+            listElement.innerHTML = "<p style='color:red'>Gagal terhubung ke server.</p>";
+        }
+    }
 
-async function loadFiles(){
+    // 2. Tampilkan daftar file ke web
+    function render(files) {
+        if(files.length === 0) {
+            listElement.innerHTML = "Tidak ada file .js di folder 'scrape'.";
+            return;
+        }
+        listElement.innerHTML = "";
+        files.forEach(file => {
+            const div = document.createElement("div");
+            div.className = "card";
+            div.innerHTML = `
+                <div>
+                    <span style="font-size:18px">📄</span> <b>${file}</b>
+                    <span class="badge">Javascript</span>
+                    <span class="badge">Plugin</span>
+                </div>
+                <span style="color:#22c55e">➜</span>
+            `;
+            div.onclick = () => openCode(file);
+            listElement.appendChild(div);
+        });
+    }
 
-const res = await fetch(
-`https://api.github.com/repos/${owner}/${repo}/contents/${folder}`
-)
+    // 3. Baca isi file dan tampilkan di Viewer
+    async function openCode(file) {
+        const viewer = document.getElementById("viewer");
+        const codeDisplay = document.getElementById("code");
+        
+        viewer.style.display = "flex";
+        codeDisplay.textContent = "// Membaca kode...";
 
-const data = await res.json()
+        try {
+            const res = await fetch(`/scrape/${file}`);
+            const text = await res.text();
+            codeDisplay.textContent = text;
+        } catch (err) {
+            codeDisplay.textContent = "// Error: Gagal memuat isi file.";
+        }
+    }
 
-const files = data
-.filter(file => file.name.endsWith(".js"))
-.map(file => file.name)
+    function closeCode() {
+        document.getElementById("viewer").style.display = "none";
+    }
 
-render(files)
+    function copyCode() {
+        const codeText = document.getElementById("code").textContent;
+        navigator.clipboard.writeText(codeText);
+        alert("Kode berhasil disalin!");
+    }
 
-}
+    function searchCode(keyword) {
+        const cards = document.querySelectorAll(".card");
+        cards.forEach(card => {
+            const name = card.innerText.toLowerCase();
+            card.style.display = name.includes(keyword.toLowerCase()) ? "flex" : "none";
+        });
+    }
 
-function render(files){
-
-const list = document.getElementById("list")
-list.innerHTML=""
-
-files.forEach(file=>{
-
-const div = document.createElement("div")
-div.className="card"
-
-div.innerHTML=`
-<div>
-📄 ${file}
-<span class="badge">Javascript</span>
-<span class="badge">Scraper</span>
-</div>
-➡
-`
-
-div.onclick=()=>openCode(file)
-
-list.appendChild(div)
-
-})
-
-}
-
-async function openCode(file){
-
-document.getElementById("viewer").style.display="flex"
-
-const res = await fetch(`./scrape/${file}`)
-const text = await res.text()
-
-document.getElementById("code").textContent = text
-
-}
-
-function closeCode(){
-document.getElementById("viewer").style.display="none"
-}
-
-loadFiles()
-
+    // Jalankan saat halaman dibuka
+    loadFiles();
 </script>
 
 </body>
