@@ -3,110 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codeverse | Cloud Database</title>
+    <title>Codeverse | Plugin Manager</title>
     <link href="https://googleapis.com" rel="stylesheet">
-    
-    <!-- Import Firebase SDK -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #0f0f14; color: #fff; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .header { font-size: 28px; font-weight: 600; margin-bottom: 20px; color: #22c55e; }
-        .search { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #1b1b22; color: #fff; margin-bottom: 25px; outline: none; }
-        .card { background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; transition: 0.3s; }
-        .card:hover { background: #20202a; border-color: #22c55e; }
-        .badge { font-size: 11px; background: #0f172a; padding: 4px 10px; border-radius: 8px; color: #22c55e; border: 1px solid #22c55e44; }
+        .container { max-width: 800px; margin: auto; }
+        .header { font-size: 26px; font-weight: 600; margin-bottom: 25px; color: #22c55e; }
         
-        .viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .codeBox { background: #0a0a0a; width: 95%; max-width: 1000px; height: 90%; border-radius: 15px; padding: 25px; position: relative; border: 1px solid #22c55e33; }
-        .controls { position: absolute; top: 15px; right: 20px; display: flex; gap: 15px; }
-        .btn-copy { background: #22c55e; color: #000; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .close { cursor: pointer; font-size: 24px; color: #ff5f56; }
-        pre { color: #22c55e; white-space: pre-wrap; overflow-y: auto; height: 90%; margin-top: 30px; font-family: 'Consolas', monospace; font-size: 14px; padding: 15px; background: #000; border-radius: 10px; }
+        .search { 
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
+            background: #1b1b22; color: #fff; margin-bottom: 20px; outline: none;
+        }
+        .search:focus { border-color: #22c55e; }
+
+        .card { 
+            background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; 
+            cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;
+        }
+        .card:hover { background: #20202a; transform: scale(1.02); }
+        .badge { font-size: 11px; background: #22c55e22; padding: 4px 10px; border-radius: 8px; color: #22c55e; margin-left: 8px; }
+
+        /* Modal Viewer */
+        .viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; flex-direction: column; z-index: 100; }
+        .v-header { padding: 15px 25px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .v-code { flex: 1; overflow: auto; padding: 20px; color: #22c55e; font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+        
+        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-copy { background: #22c55e; color: #000; }
+        .btn-close { background: #ff5f56; color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">📦 Cloud Scraper List</div>
-    <input type="text" class="search" placeholder="Cari plugin..." onkeyup="search()">
-    <div id="loading" style="text-align:center;">Menghubungkan ke Cloud...</div>
+    <div class="header">📦 My Plugin List</div>
+    <input type="text" class="search" id="src" placeholder="Cari nama file..." onkeyup="search()">
     <div id="list"></div>
 </div>
 
 <div class="viewer" id="viewer">
-    <div class="codeBox">
-        <div class="controls">
-            <button class="btn-copy" onclick="copyCode()">Salin</button>
-            <div class="close" onclick="closeView()">✖</div>
+    <div class="v-header">
+        <span id="v-title" style="font-weight: 600;">Filename</span>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-copy" onclick="copy()">Salin Kode</button>
+            <button class="btn btn-close" onclick="closeView()">Tutup</button>
         </div>
-        <pre id="codeContent"></pre>
     </div>
+    <pre class="v-code" id="v-content"></pre>
 </div>
 
+<!-- PANGGIL DATA DARI DATA.JS -->
+<script src="data.js"></script>
+
 <script>
-    // --- GANTI DENGAN CONFIG FIREBASE KAMU ---
-    const firebaseConfig = {
-        apiKey: "AIzaSy...",
-        authDomain: "://firebaseapp.com",
-        projectId: "project-kamu",
-        storageBucket: "://appspot.com",
-        messagingSenderId: "12345",
-        appId: "1:12345:web:6789"
-    };
+    const listDiv = document.getElementById("list");
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // Ambil Data dari Cloud
-    async function loadData() {
-        const listDiv = document.getElementById('list');
-        try {
-            const snapshot = await db.collection('plugins').get();
-            document.getElementById('loading').style.display = 'none';
-            listDiv.innerHTML = "";
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div>
-                        <b>📄 ${data.name}</b>
-                        <span class="badge">Cloud JS</span>
-                    </div>
-                    <span>➜</span>
-                `;
-                card.onclick = () => openView(data.code);
-                listDiv.appendChild(card);
-            });
-        } catch (e) {
-            document.getElementById('loading').innerText = "Gagal memuat data.";
-        }
+    // Menampilkan daftar dari data.js
+    function render() {
+        listDiv.innerHTML = myPlugins.map((p, i) => `
+            <div class="card" onclick="openView(${i})">
+                <div>
+                    📄 <b>${p.name}</b>
+                    <span class="badge">${p.category}</span>
+                </div>
+                <span style="color:#22c55e">Lihat ➔</span>
+            </div>
+        `).join('');
     }
 
-    function openView(code) {
-        document.getElementById('viewer').style.display = 'flex';
-        document.getElementById('codeContent').textContent = code;
+    function openView(index) {
+        const p = myPlugins[index];
+        document.getElementById("viewer").style.display = "flex";
+        document.getElementById("v-title").innerText = p.name + " (By " + p.author + ")";
+        document.getElementById("v-content").innerText = p.code;
     }
 
-    function closeView() { document.getElementById('viewer').style.display = 'none'; }
+    function closeView() { document.getElementById("viewer").style.display = "none"; }
 
-    function copyCode() {
-        navigator.clipboard.writeText(document.getElementById('codeContent').textContent);
-        alert("Kode disalin!");
+    function copy() {
+        navigator.clipboard.writeText(document.getElementById("v-content").innerText);
+        alert("Kode berhasil disalin!");
     }
 
     function search() {
-        const q = document.querySelector('.search').value.toLowerCase();
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? 'flex' : 'none');
+        const q = document.getElementById("src").value.toLowerCase();
+        const cards = document.querySelectorAll(".card");
+        cards.forEach((c, i) => {
+            c.style.display = myPlugins[i].name.toLowerCase().includes(q) ? "flex" : "none";
+        });
     }
 
-    loadData();
+    render();
 </script>
+
 </body>
 </html>
