@@ -103,22 +103,31 @@
 
     // Fungsi membuka file
     async function openCode(fileName) {
-        const viewer = document.getElementById("viewer");
-        const display = document.getElementById("codeDisplay");
-        
-        viewer.style.display = "flex";
-        display.textContent = "// Sedang memuat kode...";
+    const viewer = document.getElementById("viewer");
+    const display = document.getElementById("codeDisplay");
+    
+    viewer.style.display = "flex";
+    display.textContent = "// Sedang memuat kode dari: " + folderPath + fileName;
 
-        try {
-            // Mengambil isi file .js dari folder scrape/
-            const response = await fetch(folderPath + fileName);
-            if (!response.ok) throw new Error();
-            const content = await response.text();
-            display.textContent = content;
-        } catch (err) {
-            display.textContent = "// Error: File tidak ditemukan di folder 'scrape/'.\n// Pastikan nama file di daftar 'myPlugins' sudah benar.";
+    try {
+        // Tambahkan cache: 'no-cache' agar file selalu segar
+        const response = await fetch(folderPath + fileName, { cache: 'no-cache' });
+        
+        if (!response.ok) {
+            throw new Error(`Status: ${response.status} - File mungkin tidak ada.`);
         }
+        
+        const content = await response.text();
+        display.textContent = content;
+    } catch (err) {
+        display.textContent = `// ERROR DETAIL: 
+// 1. Pastikan folder '${folderPath}' sejajar dengan file HTML ini.
+// 2. Pastikan nama file '${fileName}' sama persis (Case Sensitive).
+// 3. JANGAN buka file HTML langsung (klik 2x), gunakan Live Server/Hosting.
+// 4. Pesan asli: ${err.message}`;
     }
+}
+
 
     function closeCode() {
         document.getElementById("viewer").style.display = "none";
