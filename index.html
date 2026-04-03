@@ -126,29 +126,23 @@ white-space:pre-wrap;
 
 <script>
 
-const scrapeFolder = "scrape/"
+const owner = "Auohhjcgjfhfgseer"
+const repo = "Zero_koyeb"
+const folder = "scrape"
 
 async function loadFiles(){
 
-try{
+const res = await fetch(
+`https://api.github.com/repos/${owner}/${repo}/contents/${folder}`
+)
 
-const res = await fetch(scrapeFolder)
-const text = await res.text()
+const data = await res.json()
 
-const parser = new DOMParser()
-const html = parser.parseFromString(text,"text/html")
-
-const links = [...html.querySelectorAll("a")]
-
-const files = links
-.map(e=>e.getAttribute("href"))
-.filter(e=>e.endsWith(".js"))
+const files = data
+.filter(file => file.name.endsWith(".js"))
+.map(file => file.name)
 
 render(files)
-
-}catch(err){
-console.log(err)
-}
 
 }
 
@@ -183,7 +177,7 @@ async function openCode(file){
 
 document.getElementById("viewer").style.display="flex"
 
-const res = await fetch(scrapeFolder+file)
+const res = await fetch(`./scrape/${file}`)
 const text = await res.text()
 
 document.getElementById("code").textContent = text
@@ -192,20 +186,6 @@ document.getElementById("code").textContent = text
 
 function closeCode(){
 document.getElementById("viewer").style.display="none"
-}
-
-function searchCode(keyword){
-
-const cards = document.querySelectorAll(".card")
-
-cards.forEach(card=>{
-if(card.innerText.toLowerCase().includes(keyword.toLowerCase())){
-card.style.display="flex"
-}else{
-card.style.display="none"
-}
-})
-
 }
 
 loadFiles()
