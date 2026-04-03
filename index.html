@@ -44,63 +44,83 @@
 </div>
 
 <script>
-    // --- KONFIGURASI GITHUB ANDA ---
-    const GITHUB_USER = "Auohhjcgjfhfgseertresdffgyyuiyt"; // Ganti dengan Username GitHub Anda
-    const GITHUB_REPO = "Zero_koyeb"; // Ganti dengan Nama Repository Anda
-    const FOLDER_PATH = "scrape";      // Ganti dengan Nama Folder tempat file .js berada
+// --- KONFIGURASI GITHUB ANDA (CEK ULANG DI SINI) ---
+const GITHUB_USER = "Auohhjcgjfhfgseertresdffgyyuiyt"; // Contoh: "zennzxd"
+const GITHUB_REPO = "Zero_koyeb"; // Contoh: "my-scrapers"
+const FOLDER_PATH = "scrape";       // Folder tempat file .js Anda (tanpa tanda /)
 
-    // URL API GitHub untuk list file
-    const API_URL = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/${FOLDER_PATH}`;
-    // URL Raw GitHub untuk baca isi file
-    const RAW_URL = `https://githubusercontent.com{GITHUB_USER}/${GITHUB_REPO}/main/${FOLDER_PATH}/`;
+// URL API dan Raw (Sudah diperbaiki formatnya)
+const API_URL = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/${FOLDER_PATH}`;
+const RAW_URL = `https://githubusercontent.com{GITHUB_USER}/${GITHUB_REPO}/main/${FOLDER_PATH}/`;
 
-    async function loadFromGitHub() {
-        const listDiv = document.getElementById("list");
-        const loading = document.getElementById("loading");
+async function loadFromGitHub() {
+    const listDiv = document.getElementById("list");
+    const loading = document.getElementById("loading");
 
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error("Repo tidak ditemukan atau Private");
-            const files = await response.json();
-
-            loading.style.display = "none";
-            listDiv.innerHTML = "";
-
-            files.filter(f => f.name.endsWith('.js')).forEach(file => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerHTML = `
-                    <div>
-                        <span style="font-size:18px">📄</span> <b>${file.name}</b>
-                        <span class="badge">JS</span>
-                        <span class="badge">GitHub</span>
-                    </div>
-                    <span style="color:#22c55e">➜</span>
-                `;
-                card.onclick = () => openCode(file.name);
-                listDiv.appendChild(card);
-            });
-
-        } catch (err) {
-            loading.innerHTML = `<span style="color:#ff5f56">Gagal Memuat: ${err.message}</span>`;
-        }
-    }
-
-    async function openCode(fileName) {
-        const viewer = document.getElementById("viewer");
-        const display = document.getElementById("codeDisplay");
+    try {
+        const response = await fetch(API_URL);
         
-        viewer.style.display = "flex";
-        display.textContent = "// Mengambil kode dari GitHub...";
-
-        try {
-            const res = await fetch(RAW_URL + fileName);
-            const text = await res.text();
-            display.textContent = text;
-        } catch (err) {
-            display.textContent = "// Error: Gagal mengambil isi file.";
+        if (!response.ok) {
+            if (response.status === 404) throw new Error("Folder atau Repo tidak ditemukan. Cek Nama User/Repo/Folder.");
+            if (response.status === 403) throw new Error("Terkena Limit API GitHub. Tunggu sebentar.");
+            throw new Error("Gagal akses GitHub (Mungkin Repo Private)");
         }
+
+        const files = await response.json();
+        
+        // Filter hanya file .js
+        const jsFiles = files.filter(f => f.name.endsWith('.js'));
+
+        if (jsFiles.length === 0) {
+            loading.innerHTML = "Folder ditemukan, tapi tidak ada file .js di dalamnya.";
+            return;
+        }
+
+        loading.style.display = "none";
+        listDiv.innerHTML = "";
+
+        jsFiles.forEach(file => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <div>
+                    <span style="font-size:18px">📄</span> <b>${file.name}</b>
+                    <span class="badge">JS</span>
+                    <span class="badge">GitHub</span>
+                </div>
+                <span style="color:#22c55e">➜</span>
+            `;
+            card.onclick = () => openCode(file.name);
+            listDiv.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error(err);
+        loading.innerHTML = `<div style="background:#ff5f5622; padding:15px; border-radius:10px; border:1px solid #ff5f56">
+            <b style="color:#ff5f56">ERROR:</b><br>
+            ${err.message}<br><br>
+            <small>Tips: Pastikan Repo bersifat <b>Public</b> dan koneksi internet stabil.</small>
+        </div>`;
     }
+}
+
+async function openCode(fileName) {
+    const viewer = document.getElementById("viewer");
+    const display = document.getElementById("codeDisplay");
+    
+    viewer.style.display = "flex";
+    display.textContent = "// Mengambil isi kode...";
+
+    try {
+        // Gunakan cache breaker agar selalu ambil versi terbaru dari GitHub
+        const res = await fetch(RAW_URL + fileName + '?t=' + new Date().getTime());
+        if (!res.ok) throw new Error("Gagal mengambil isi file.");
+        const text = await res.text();
+        display.textContent = text;
+    } catch (err) {
+        display.textContent = "// Error: " + err.message;
+    }
+}
 
     function closeCode() {
         document.getElementById("viewer").style.display = "none";
