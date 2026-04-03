@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codeverse | Plugin Manager</title>
+    <title>My Plugin List</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #0f0f14; color: #fff; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .header { font-size: 26px; font-weight: 600; margin-bottom: 25px; color: #22c55e; }
+        .container { max-width: 600px; margin: auto; }
         
-        .search { 
-            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
-            background: #1b1b22; color: #fff; margin-bottom: 20px; outline: none;
-        }
+        /* Header */
+        .header { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #22c55e; display: flex; align-items: center; gap: 10px; }
+        
+        /* Search Bar */
+        .search { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #1b1b22; color: #fff; margin-bottom: 20px; outline: none; transition: 0.3s; }
         .search:focus { border-color: #22c55e; }
 
-        .card { 
-            background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; 
-            cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;
-        }
-        .card:hover { background: #20202a; transform: scale(1.02); }
-        .badge { font-size: 11px; background: #22c55e22; padding: 4px 10px; border-radius: 8px; color: #22c55e; margin-left: 8px; }
+        /* List Item / Card */
+        .card { background: #18181f; padding: 18px; border-radius: 15px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid transparent; transition: 0.3s; }
+        .card:hover { background: #20202a; border-left-color: #22c55e; transform: translateX(5px); }
+        .badge { font-size: 10px; background: #22c55e22; padding: 4px 8px; border-radius: 6px; color: #22c55e; margin-left: 10px; text-transform: uppercase; border: 1px solid #22c55e44; }
 
-        /* Modal Viewer */
+        /* Code Viewer Modal */
         .viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; flex-direction: column; z-index: 100; }
-        .v-header { padding: 15px 25px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        .v-code { flex: 1; overflow: auto; padding: 20px; color: #22c55e; font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+        .v-header { padding: 15px 20px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        pre { flex: 1; padding: 20px; overflow: auto; color: #22c55e; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; background: #000; }
         
-        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+        .btn { padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; }
         .btn-copy { background: #22c55e; color: #000; }
         .btn-close { background: #ff5f56; color: #fff; }
     </style>
@@ -38,62 +36,201 @@
 
 <div class="container">
     <div class="header">📦 My Plugin List</div>
-    <input type="text" class="search" id="src" placeholder="Cari nama file..." onkeyup="search()">
-    <div id="list"></div>
+    
+    <input type="text" class="search" id="srcInput" placeholder="Cari nama file..." onkeyup="search()">
+    
+    <div id="listContainer"></div>
 </div>
 
+<!-- Modal Tempat Nampilin Kode -->
 <div class="viewer" id="viewer">
     <div class="v-header">
-        <span id="v-title" style="font-weight: 600;">Filename</span>
+        <b id="v-title" style="color:#22c55e">Filename.js</b>
         <div style="display: flex; gap: 10px;">
-            <button class="btn btn-copy" onclick="copy()">Salin Kode</button>
-            <button class="btn btn-close" onclick="closeView()">Tutup</button>
+            <button class="btn btn-copy" onclick="copy()">Salin</button>
+            <button class="btn btn-close" onclick="closeV()">Tutup</button>
         </div>
     </div>
-    <pre class="v-code" id="v-content"></pre>
+    <pre id="v-content"></pre>
 </div>
 
-<!-- PANGGIL DATA DARI DATA.JS -->
-<script src="data.js"></script>
-
 <script>
-    const listDiv = document.getElementById("list");
+    // --- TEMPAT NARUH KODE SCRAPER KAMU ---
+    // Gunakan tanda ` (backtick) untuk membungkus kode
+    const pluginData = [
+        {
+            name: "nanobanana",
+            type: "Ai",
+            code: `import axios from "axios"
 
-    // Menampilkan daftar dari data.js
+async function Nbanana(imageBuffer, prompt) {
+  const { data: uploadInfo } = await axios.post(
+    "https://imgeditor.co/api/get-upload-url",
+    {
+      fileName: "image.jpg",
+      contentType: "image/jpeg",
+      fileSize: imageBuffer.length
+    },
+    {
+      headers: {
+        accept: "*/*",
+        "content-type": "application/json"
+      }
+    }
+  )
+
+  await axios.put(uploadInfo.uploadUrl, imageBuffer, {
+    headers: {
+      "content-type": "image/jpeg"
+    },
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity
+  })
+
+  const { data: generate } = await axios.post(
+    "https://imgeditor.co/api/generate-image",
+    {
+      prompt,
+      styleId: "realistic",
+      mode: "image",
+      imageUrl: uploadInfo.publicUrl,
+      imageUrls: [uploadInfo.publicUrl],
+      numImages: 1,
+      outputFormat: "png",
+      model: "nano-banana"
+    },
+    {
+      headers: {
+        accept: "*/*",
+        "content-type": "application/json"
+      }
+    }
+  )
+
+  let result
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    const { data: status } = await axios.get(
+      "https://imgeditor.co/api/generate-image/status",
+      {
+        params: { taskId: generate.taskId },
+        headers: { accept: "*/*" }
+      }
+    )
+
+    if (status.status === "completed") {
+      result = status.imageUrl
+      break
+    }
+  }
+
+  return result
+}
+
+let handler = async (m, { conn, text, setReply }) => {
+  let q = m.quoted ? m.quoted : m
+  let mime = (q.msg || q).mimetype || ""
+
+  if (!/image/.test(mime)) {
+    return setReply("Reply gambar dengan prompt")
+  }
+
+  if (!text) {
+    return setReply("Masukkan prompt")
+  }
+
+  try {
+    await conn.sendReact?.(m.chat, "⏳", m.key)
+
+    const buffer = await q.download()
+
+    const result = await Nbanana(buffer, text)
+
+    await conn.sendMessage(
+      m.chat,
+      {
+        image: { url: result },
+        caption: `🍌 *Nano Banana AI*
+
+📝 Prompt : ${text}`
+      },
+      { quoted: m }
+    )
+
+    await conn.sendReact?.(m.chat, "✅", m.key)
+
+  } catch (err) {
+    console.error(err)
+    setReply("Terjadi kesalahan")
+  }
+}
+
+handler.help = ["nanobanana"]
+handler.tags = ["ai"]
+handler.command = ["nanobanana", "nb", "banana"]
+
+export default handler
+}`
+        },
+        {
+            name: "tiktok.js",
+            type: "Scraper",
+            code: `// Kode TikTok Scraper Kamu
+async function tiktok(url) {
+    return "TikTok Video URL";
+}`
+        },
+        {
+            name: "youtube.js",
+            type: "Downloader",
+            code: `// Kode YouTube Downloader Kamu
+console.log("YT Download Ready");`
+        }
+    ];
+
+    // Fungsi tampilin list
     function render() {
-        listDiv.innerHTML = myPlugins.map((p, i) => `
-            <div class="card" onclick="openView(${i})">
+        const listDiv = document.getElementById("listContainer");
+        listDiv.innerHTML = pluginData.map((p, i) => `
+            <div class="card" onclick="openV(${i})">
                 <div>
-                    📄 <b>${p.name}</b>
-                    <span class="badge">${p.category}</span>
+                    <b>📄 ${p.name}</b>
+                    <span class="badge">${p.type}</span>
                 </div>
-                <span style="color:#22c55e">Lihat ➔</span>
+                <span style="color:#22c55e">➔</span>
             </div>
         `).join('');
     }
 
-    function openView(index) {
-        const p = myPlugins[index];
+    // Fungsi buka detail kode
+    function openV(index) {
+        const item = pluginData[index];
         document.getElementById("viewer").style.display = "flex";
-        document.getElementById("v-title").innerText = p.name + " (By " + p.author + ")";
-        document.getElementById("v-content").innerText = p.code;
+        document.getElementById("v-title").innerText = item.name;
+        document.getElementById("v-content").innerText = item.code;
     }
 
-    function closeView() { document.getElementById("viewer").style.display = "none"; }
+    function closeV() {
+        document.getElementById("viewer").style.display = "none";
+    }
 
     function copy() {
-        navigator.clipboard.writeText(document.getElementById("v-content").innerText);
+        const text = document.getElementById("v-content").innerText;
+        navigator.clipboard.writeText(text);
         alert("Kode berhasil disalin!");
     }
 
     function search() {
-        const q = document.getElementById("src").value.toLowerCase();
+        const q = document.getElementById("srcInput").value.toLowerCase();
         const cards = document.querySelectorAll(".card");
         cards.forEach((c, i) => {
-            c.style.display = myPlugins[i].name.toLowerCase().includes(q) ? "flex" : "none";
+            const name = pluginData[i].name.toLowerCase();
+            c.style.display = name.includes(q) ? "flex" : "none";
         });
     }
 
+    // Jalankan render saat buka web
     render();
 </script>
 
